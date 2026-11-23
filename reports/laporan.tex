@@ -11,7 +11,7 @@
 \addbibresource{references.bib}
 
 \setcounter{secnumdepth}{0}   
-\title{Pemodelan Regresi Linear Pertumbuhan Penduduk Provinsi Lampung dengan Evaluasi Bootstrap}
+\title{Pemodelan Pertumbuhan Penduduk Provinsi Lampung dengan Evaluasi Bootstrap}
 \author{Ferdian, Naufal Aziz \and Ramadhan, Hasan Nur \and Febrianti, Melva \and Sari, Juwita}
 \date{\today}
 
@@ -22,12 +22,13 @@
 {
 	\centering
 	\section*{Abstract}
-	Pertumbuhan penduduk merupakan indikator penting dalam perencanaan pembangunan daerah.
-	Penelitian ini memberikan pemodelan laju pertumbuhan penduduk pada provinsi Lampung
-	pada tahun 2025 dengan menggunakan regresi linear berganda. Karana jumlah observasi
-	yang kecil sehingga asumsi normalitas residual sulit dipastikan, sehingga galat baku
-	dan interval kepercayaan koefiesn diestimasi dengan bootstrap sebanyak 1000 replikasi
-	dibandingkan dengan hasil metode klasik. Hasil menunjukan ...
+	Pertumbuhan penduduk merupakan indikator penting dalam perencanaan
+	pembangunan daerah.	Penelitian ini memberikan pemodelan laju pertumbuhan
+	penduduk pada provinsi Lampung pada tahun 2025 dengan menggunakan regresi
+	linear berganda. Karana jumlah observasi yang kecil sehingga asumsi normalitas
+	residual sulit dipastikan, sehingga galat baku dan interval kepercayaan koefiesn
+	diestimasi dengan bootstrap sebanyak 1000 replikasi dibandingkan dengan hasil
+	metode klasik. Hasil menunjukan ...
 }
 
 
@@ -36,18 +37,45 @@
 
 \begin{multicols}{2}
 	\section{Pendahuluan}
-	Dengan pemodelan
+	\subsection{Latar Belakang}
+	Kondisi penduduk merupakan hal aspek penting diperhartikan karena memberikan dampak
+	dalam melihat berbagai aspek pembangunan seperti infrastruktur, pelayanan publik
+	dan pemerataan kesejahteraan masyarkat sehingga dengan adanya informsi bagimana kemanjuan dalam suatu wilayah sehingga dapat digunakan
+	dalam perencanaan yang lebih tepat.\parencite{agung2026} Untuk dapat mendapatkan
+	perencanaan tentu diperlukan data penduduk yang dapat diolah dengan metode
+	statistik yang tepat agar perencanaan dapat dibentuk. Data tentang penduduk
+	peneliti dapatkan dari data BPS 15 kabupaten di Lampung.
 
+	Namun, jumlah data juga akan mempengaruhi aturan normalitas pada
+	metode statistik, disini bootstrap memiliki peran penting dalam
+	dalam mengetahui nilai parameter. Bootstrap bekerja dengan melakukan pemodelan regresi
+	ulang dengan mengambil kembali baris-baris pada data secara acak dengan pengembalian.
+	Sebagai contoh pada bootstrap iterasi terambil data baris: 1, 2, 2, 3, 4, 6, 7, 7 sampai
+	mendapat jumlah pemgambilan ulang yang diiginkan.
+
+	Maka dari itu kami menggunakan metode bootstrap untuk dapat mengistimasi paramenter
+	pada pemodelan regresi menggunakan data ini.
+
+	\subsection{Rumusan Masalah}
+	1. Apakah regresi dengan data kecil ini memenuhi asumsi normalitas?
+	2. Seberapa berbeda Confidence Interval bootstrap dibanding dengan klasik?
+
+
+	\section{Tinjauan Pustaka}
+	Bootstrap
+
+
+	Regresi
 	\section{Methods}
 
 	\begin{figure}[H]
 		\centering
 		\begin{tikzpicture}[
-				node distance=0.9cm, >=Stealth,
+				node distance=0.7cm, >=Stealth,
 				mulai/.style={rectangle, rounded corners=8pt, draw, fill=gray!15,
 						align=center, text width=4.8cm, minimum height=0.9cm},
 				proses/.style={rectangle, rounded corners=2pt, draw, align=center,
-						text width=4.8cm, minimum height=0.9cm}
+						text width=4.8cm, minimum height=0.9cm, minimum width = 2cm}
 			]
 			\node[mulai]  (a) {Data BPS Provinsi Lampung};
 			\node[proses, below=of a] (b) {Pembersihan data: hapus baris total,
@@ -80,9 +108,11 @@
 	\end{figure}
 
 
+	\section{Hasil}
+
 	\section{Pembahasan}
 
-	\section{Kesimpulan}
+	\section{Kesimpulan dan Keterbatasan}
 \end{multicols}
 
 

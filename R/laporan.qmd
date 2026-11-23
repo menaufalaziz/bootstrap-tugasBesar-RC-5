@@ -1,0 +1,211 @@
+---
+execute: 
+  message : false
+  echo : false
+  warning : false
+format:
+  pdf:
+    fig-pos: "H"
+    tbl-pos: "H"
+    toc: false
+    number-sections: true
+    documentclass: report
+    geometry:
+      - top=40mm
+      - left=40mm
+      - right=30mm
+      - bottom=30mm
+---
+::: {.content-visible when-format="pdf"}
+\begin{titlepage}
+\begin{center}
+
+{\Huge \textbf{Pemodelan Pertumbuhan Penduduk Provinsi Lampung 2025 dengan Evaluasi Bootstrap}}
+
+\vspace{1cm}
+
+Tugas Besar Komputasi Statistik
+
+\vspace{3cm}
+
+\centering
+\includegraphics[width=0.4\textwidth]{~/Pictures/logo-Itera/Logo_ITERA.png}
+
+
+\vfill
+
+{\large
+\vspace{1cm}
+\textbf{Kelompok 5 RC:}\\
+Naufal Aziz Ferdian 124450116\\
+Hasan Nur Ramadhan 124450 \\
+Melva Sabrina Putri 124450 \\
+Juwita Sari 124450 \\
+}
+
+\vspace{1cm}
+
+{\large \today}
+
+{\large Fakultas Sains}
+
+{\large Program Studi Sains Data}
+
+{\large Institut Teknologi Sumatera}
+
+\end{center}
+\end{titlepage}
+
+::::
+
+# Abstract {.unnumbered}
+Pertumbuhan penduduk merupakan indikator penting dalam perencanaan
+pembangunan daerah.	Penelitian ini memberikan pemodelan laju pertumbuhan
+penduduk pada provinsi Lampung pada tahun 2025 dengan menggunakan regresi
+linear berganda. Karana jumlah observasi yang kecil sehingga asumsi normalitas
+residual sulit dipastikan, sehingga galat baku dan interval kepercayaan koefiesn
+diestimasi dengan bootstrap sebanyak 1000 replikasi dibandingkan dengan hasil
+metode klasik. Hasil menunjukan ...
+
+# Pendahuluan 
+
+
+# Tinjauan Pustaka
+
+
+# Hasil 
+
+## Data
+```{r}
+library(boot)
+library(tidyverse)
+```
+
+### Statistik deskriptif{.unumbered}
+```{r}
+#| label: tbl-data
+#| tbl-cap: "enam baris pertama data"
+data <- "../data/processed/"
+model <- "../results/models/models_ols.rds"
+
+data <- read_csv(
+  file.path(data, "data_bersih.csv"),
+  show_col_types = FALSE
+)
+data |> 
+  head() |>
+  knitr::kable(digits = 1,
+    col.names = c("kpt", "jmlh", "laju", "%", "kdtn", "rasiolk", "log")
+  )
+```
+@tbl-data menyajikan enam baris pertama data yang digunakan, 
+yang masing-masing mewakili satu kabupaten di Provinsi Lampung. 
+Setiap baris memuat jumlah penduduk(jmlh), laju pertumbuhan penduduk per tahun(laju), 
+persentase penduduk(%), kepadatan penduduk(kdtn), rasio jenis kelamin(rsiolk), dan kepadatan dalam 
+bentuk logaritma natural(log).
+```{r}
+#| label: tbl-deskriptif
+#| tbl-cap: "Statistik deskriptif data"
+# 1. Pilih variabel dan beri nama pendek
+vars <- data |>
+  select(
+    penduduk  = jumlah_penduduk_ribu,
+    laju      = laju_pertumbuhan_penduduk_per_tahun,
+    kepadatan = kepadatan_penduduk_per_km_persegi_km2,
+    ln_kep    = log_kepadatan,
+    rasio_jk  = rasio_jenis_kelamin_penduduk
+  )
+
+# 2. Hitung statistik; pemisah "__" supaya tidak bentrok dengan nama variabel
+ringkas <- vars |>
+  summarise(across(
+    everything(),
+    list(
+      n      = ~ sum(!is.na(.x)),
+      mean   = ~ mean(.x, na.rm = TRUE),
+      sd     = ~ sd(.x, na.rm = TRUE),
+      min    = ~ min(.x, na.rm = TRUE),
+      median = ~ median(.x, na.rm = TRUE),
+      max    = ~ max(.x, na.rm = TRUE)
+    ),
+    .names = "{.col}__{.fn}"
+  ))
+
+# 3. Ubah dari satu baris lebar menjadi satu baris per variabel
+tabel <- ringkas |>
+  pivot_longer(
+    everything(),
+    names_to = c("variabel", "statistik"),
+    names_sep = "__"
+  ) |>
+  pivot_wider(names_from = statistik, values_from = value) |>
+  mutate(variabel = recode(variabel,
+    penduduk  = "Jumlah penduduk (ribu jiwa)",
+    laju      = "Laju pertumbuhan (% per tahun)",
+    kepadatan = "Kepadatan (jiwa/km²)",
+    ln_kep    = "ln(kepadatan)",
+    rasio_jk  = "Rasio jenis kelamin"
+  ))
+
+# 4. Tampilkan
+knitr::kable(
+  tabel,
+  digits = 2,
+  col.names = c("Variabel", "n", "Rata-rata", "Simp. baku", "Min", "Median", "Maks"),
+  booktabs = TRUE
+)
+```
+@tbl-deskriptif menyajikan statistik deksriptif tiap varibel numerik kecuali persen.
+Jika dilihat hanya dari tabel TO-DO..
+
+```{r}
+#| label: fig-hist-kepadatan
+#| fig-cap: sebaran sebelum (atas) dan sesudah (bawah) transformasi log
+#| fig-width: 3.3
+#| fig-height: 4.2
+df_hist <- data |> 
+  transmute(
+    `kepadatan (jiwa/km2)` = kepadatan_penduduk_per_km_persegi_km2,
+    `ln(kepadatan)` = log_kepadatan
+  ) |> 
+  pivot_longer(everything(), names_to = "skala", values_to = "nilai") |> 
+  mutate(skala = factor(skala,
+                        levels = c("kepadatan (jiwa/km2)", "ln(kepadatan)")))
+
+
+ggplot(df_hist, aes(x = nilai)) + 
+  geom_histogram(bins = 8, fill = "grey70", colour = "white") +
+  geom_rug() +
+  facet_wrap(~ skala, ncol = 1, scales  = "free") +
+  labs(x = NULL, y = "Frekuensi") +
+  theme_minimal(base_size = 9)
+
+```
+@fig-hist-kepadatan memberikan gambaran kalau distribusi kepadatan pendusuk per km persegi km2 
+bertumpuk bagian kiri histogram, ini tentu akan membuaat pemodelan OLS akan buruk. Maka dari itu 
+peniliti menggunkan logaritma natural untuk transformasi nilai-nya dan akhirnya 
+mendaptkat distribusi yang dapat dibilang normal.
+
+###  Model
+```{r}
+#| label: tbl-koefesien
+#| tbl-cap: Nilai koefesien dari Model
+#| tbl-pos: "H"
+model <- lm(data$laju_pertumbuhan_penduduk_per_tahun ~ data$rasio_jenis_kelamin_penduduk + data$log_kepadatan)
+broom::tidy(model)
+
+```
+
+
+
+
+
+
+
+# Pembahasan
+
+
+# Kesimpulan dan Batasan
+
+
+

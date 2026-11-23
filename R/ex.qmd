@@ -1,0 +1,136 @@
+---
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-title: "Contents"
+    number-sections: true
+    theme: cosmo
+    title: "Your Document Title"
+    subtitle: "A Comprehensive Guide"
+    author: 
+      - name: "Your Name"
+        affiliation: "Your Organization"
+      - name: "Co-Author Name"
+        affiliation: "Their Organization"
+    date: today
+  pdf:
+    toc: false
+    number-sections: true
+    documentclass: report
+    geometry:
+      - top=30mm
+      - left=20mm
+      - right=20mm
+      - bottom=30mm
+---
+
+<!-- Custom cover page for PDF only -->
+::: {.content-visible when-format="pdf"}
+\begin{titlepage}
+\begin{center}
+
+{\Huge \textbf{Your Document Title}}
+
+\vspace{1cm}
+
+{\Large A Comprehensive Guide}
+
+\vspace{3cm}
+
+\includegraphics[width=0.5\textwidth]{logo-itera.jpg}
+
+\vfill
+
+{\large
+\vspace{1cm}
+\textbf{Authors:}\\
+Your Name\\
+Co-Author Name\\
+}
+
+\vspace{1cm}
+
+{\large \today}
+
+\end{center}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+:::
+
+<!-- Cover page for HTML only -->
+::: {.content-visible when-format="html"}
+<div style="text-align: center; padding: 50px 0;">
+
+# Your Document Title {.unnumbered}
+
+## A Comprehensive Guide {.unnumbered}
+
+<div style="margin: 60px 0;">
+![Organization Logo](logo-itera.jpg.jpeg){width=50%}
+</div>
+
+<div style="margin-top: 80px;">
+**Published by:**
+
+Your Organization Name  
+Department or Division
+
+**Authors:**
+
+Your Name  
+Co-Author Name
+
+</div>
+
+</div>
+
+---
+
+:::
+
+# Executive Summary {.unnumbered}
+
+This section provides a brief overview of the document's key findings and recommendations.
+
+# Introduction
+
+This is the introduction section of your document.
+
+## Purpose
+
+Explain the purpose of this document.
+
+## Scope
+
+Define the scope and boundaries.
+
+# Background
+
+Provide relevant background information.
+
+# Main Content
+
+Your primary content goes here.
+
+## Section 1
+
+Your first major content section.
+
+### Subsection 1.1
+
+Detailed information.
+
+## Section 2
+
+Your second major content section.
+
+# Conclusions
+
+Summarize your conclusions.
+
+# References {.unnumbered}
+
+List your references here.
