@@ -38,7 +38,7 @@ Tugas Besar Komputasi Statistik
 \vspace{1cm}
 \textbf{Kelompok 5 RC:}\\
 Naufal Aziz Ferdian 124450116\\
-Hasan Nur Ramadhan 124450 \\
+Hasan Nur Ramadhan 124450013 \\
 Melva Sabrina Putri 124450 \\
 Juwita Sari 124450 \\
 }
@@ -75,13 +75,12 @@ metode klasik. Hasil menunjukan ...
 
 # Hasil 
 
-## Data
 ```{r}
 library(boot)
 library(tidyverse)
 ```
 
-### Statistik deskriptif{.unumbered}
+## Statistik deskriptif{.unnumbered}
 ```{r}
 #| label: tbl-data
 #| tbl-cap: "enam baris pertama data"
@@ -186,21 +185,154 @@ bertumpuk bagian kiri histogram, ini tentu akan membuaat pemodelan OLS akan buru
 peniliti menggunkan logaritma natural untuk transformasi nilai-nya dan akhirnya 
 mendaptkat distribusi yang dapat dibilang normal.
 
-###  Model
+##  Model{.unnumbered}
+
+Dengan tinjauan pustaka, Kami menggunakan laju pertumbuhan sebagai variable dependen dan rasio jenis kelamin dan 
+log(kepadatan_penduduk) sebagai variabel independent
+
+\begin{equation}
+ Y_i = \beta_0 + \beta_1 ln(X_{1i}) + \beta_2 X_{2i} + \varepsilon_i,m,
+  \qquad i = 1, 2, \dots, n
+  \label{eq:model}
+\end{equation}
+
+
+```{r}
+#| include: false
+
+model <- lm(laju ~ rasio_jk + ln_kep, data = vars)
+df_model <- broom::tidy(model, conf.int = TRUE)
+
+```
+
 ```{r}
 #| label: tbl-koefesien
 #| tbl-cap: Nilai koefesien dari Model
 #| tbl-pos: "H"
-model <- lm(data$laju_pertumbuhan_penduduk_per_tahun ~ data$rasio_jenis_kelamin_penduduk + data$log_kepadatan)
-broom::tidy(model)
 
+table_coef <- df_model |>
+  mutate(
+    term = case_match(
+      term,
+      "(Intercept)" ~ "intersep",
+      "rasio_jk" ~ "Rasio Jenis Kelamin",
+      "ln_kep" ~ "ln(kepadatan)"
+ 
+    )
+
+  )
+
+knitr::kable(
+  table_coef,
+  col.names = c("koefesien", "estimasi", "galat", "t", "p", "ci.low", "ci.top") 
+)
 ```
 
 
+## Evaluasi Model {.unnumbered}
+```{r}
+#| label: fig-residualvsfitted
+#| fig-cap: esidual vs fitted
+#| fig-width: 2.3
+#| fig-height: 2.2
+#| fig-pos: "H"
+
+diagnostik <- broom::augment(model)
+
+ggplot(diagnostik, aes(x = .fitted, y = .resid)) +
+  geom_point() +
+  geom_hline(yintercept = 0) +
+  labs(x = "fitted", y = "residual") +
+  theme_minimal(base_size = 9)
+
+```
+
+@fig-residualvsfitted menampilkan residual terhadap nilai fitted.
+Residual tersebar di sekitar nol dengan rentang kira-kira -0.16 - 0.28 dan 
+tidak tampak pola melengkung atau menyempit seperti corong yang jelas.
+
+```{r}
+#| label: fig-QQ-plot
+#| fig-cap: QQ-plot
+#| fig-width: 2.3
+#| fig-height: 2.2
+
+#| fig-pos: "H"
+
+ggplot(diagnostik, aes(sample = .std.resid)) +
+  stat_qq() +
+  stat_qq_line() +
+  labs(x = "Theoritical Quantiles", y = "Sampel quantile") +
+  theme_minimal(base_size = 9)
 
 
 
 
+
+```
+
+@fig-QQ-plot menampilkan kuanti resiudal terstandarisasi dengan kuantil 
+distribusi normal. Sebagian besar titik berada padda haris acuan, 
+dengan sedikit penyimpanagan pada ujung awal dan akhir plot. Dengan 
+pengamatan sekecil ini, peyimpangan seperti ini sanget sulit dibedakan.
+
+```{r}
+#| label: residual-normal
+#| tbl-cap: Asumsi residual normal
+#| tbl-pos: "H"
+
+shapiro.test(resid(model))
+
+
+```
+
+## Bootsrap {.unnumbered}
+```{r}
+#| label: tbl-olsvsbootsrap
+
+
+statistic <- function(data, indicies) {
+  # Resampling observasi
+  d <- vars[indicies, ]
+
+
+
+  # Estimasi model OLS
+  model_boot <- lm(formula(model), data = d)
+  coef(model_boot)
+}
+
+set.seed(124)
+hasil_boot <- boot(
+  data = data,
+  statistic = statistic,
+  R = 10000
+)
+
+hasil_boot
+# Intercept
+boot.ci(hasil_boot, type = "perc", index = 1)
+
+# Log kepadatan
+boot.ci(hasil_boot, type = "perc", index = 2)
+
+# Rasio jenis kelamin
+boot.ci(hasil_boot, type = "perc", index = 3)
+
+```
+
+| Koefisien | Estimasi | SE OLS | SE bootstrap | Bias | CI OLS | CI persentil |
+|:----------|---------:|-------:|-------------:|-----:|:------:|:------------:|
+| Intersep | −2,765 | 3,048 | 3,065 | −0,020 | [−9,405; 3,876] | [−8,597; 3,339] |
+| Rasio jenis kelamin | 0,0396 | 0,0278 | 0,0280 | 0,0003 | [−0,021; 0,100] | [−0,0148; 0,0939] |
+| ln(kepadatan) | −0,0365 | 0,0387 | 0,0456 | −0,0024 | [−0,121; 0,048] | [−0,143; 0,052] |
+
+: Perbandingan estimasi OLS dan bootstrap {#tbl-bootstrap}
+
+Dengan B = 10.000 replikasi, galat baku bootstrap koefisien intersep dan rasio jenis kelamin hampir sama 
+dengan galat baku OLS, sedangkan galat baku bootstrap untuk ln(kepadatan) sekitar 18% lebih besar (0,046 vs 0,039). 
+Bias bootstrap kecil untuk semua koefisien. Selang kepercayaan 95% dari kedua metode memuat nol untuk setiap koefisien, 
+sehingga data tidak cukup untuk membedakan pengaruh masing-masing prediktor dari nol.
 
 # Pembahasan
 
